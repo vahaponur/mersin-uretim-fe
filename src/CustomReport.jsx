@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./styles.css";
-
+import * as dataHelper from "./dataHelper"
+import { BunkerLineGraph } from "./Chart";
 const formatDate = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -18,10 +19,22 @@ const CustomReport = () => {
   const [loading, setLoading] = useState(false);
 
   const handleFetchData = async () => {
-    if (new Date(startDate) > new Date(endDate)) {
-      alert("Start date cannot be later than end date.");
+
+    const sd=new Date(startDate)
+    const ed=new Date(endDate)
+    if (sd >= ed) {
+      alert("Baslangic tarihi bitisten erken veya ayni olamaz");
       return;
     }
+    const differenceInMs = ed - sd;
+    const differenceInDays = differenceInMs / (1000 * 3600 * 24);
+
+            // Check if the difference is greater than 5 days
+            if (differenceInDays > 5) {
+                alert('En fazla 5 gunluk rapor alinabilir');
+                return
+            } 
+
 
     setLoading(true); // Set loading to true before fetching data
 
@@ -36,8 +49,8 @@ const CustomReport = () => {
       const bdata = await response1.json();
       const edata=await response2.json()
 
-      setBunkerData(getBunkerDatasbyBunker(bdata));
-      setExtractionScaleData(getExtractionScaleDatasbyExtractionScale(edata))
+      setBunkerData(dataHelper.getBunkerDatasbyBunker(bdata));
+      setExtractionScaleData(dataHelper.getExtractionScaleDatasbyExtractionScale(edata))
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -47,32 +60,68 @@ const CustomReport = () => {
 
   return (
     <>
-      <div>
-        <label htmlFor="start-date">Başlangıç Tarihi:</label>
+    <div className="container text-center mt-5">
+    <div className="row justify-content-md-center mb-2 ">
+        <label className="col col-lg-2" htmlFor="start-date">Başlangıç Tarihi: </label>
         <input
+        className="col col-lg-2"
           type="datetime-local"
           id="start-date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
         />
       </div>
-      <div>
-        <label htmlFor="end-date">Bitiş Tarihi:</label>
+      <div className="row justify-content-md-center">
+        <label className="col col-lg-2" htmlFor="end-date">Bitiş Tarihi:</label>
         <input
+        className="col col-lg-2"
           type="datetime-local"
           id="end-date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
         />
       </div>
-      <button onClick={handleFetchData} disabled={loading}>Raporla</button>
+      <button className="mt-2 btn btn-warning "  type="button" onClick={handleFetchData} disabled={loading}>Raporla</button>
+    </div>
+
+
       <div>
         {loading ? (
           <div>Loading...</div>
         ) : bunkerData && extractionScaleData ? (
-          <div>
+          <div className="container">
             {/* Display your data here */}
             {/* For example: */}
+
+            {(()=>{
+  const bunkers = Object.keys(bunkerData);
+  let graphs = [];
+  let graphsToRender=[];
+  let i = 0
+  for (const bunker of bunkers) {
+    i++
+    const bunkerDataArray = bunkerData[bunker];
+    graphs.push(<BunkerLineGraph key={bunker} uniqueBunkerData={bunkerDataArray} />);
+    if(i%2==0){
+      graphsToRender.push(
+      <div className="row">
+        <div className="col">{graphs[0]}</div>
+        <div className="col">{graphs[1]}</div>
+      </div>)
+      graphs=[]
+    }
+    if(i === bunkers.length){
+      graphsToRender.push(
+        <div className="row">
+          <div className="col-6">{graphs[0]}</div>
+
+        </div>)
+    }
+  }
+
+  return graphsToRender;
+})()}
+            
             <pre>{JSON.stringify(bunkerData, null, 2)}</pre>
             <pre>{JSON.stringify(extractionScaleData, null, 2)}</pre>
           </div>
@@ -85,75 +134,5 @@ const CustomReport = () => {
 export default CustomReport;
 
 
-const getBunkers = (bunkerDatas)=>{
-    const bunkers = new Set()
-    for (let index = 0; index < bunkerDatas.length; index++) {
-        const element = JSON.stringify(bunkerDatas[index].bunker);
-        if(bunkers.has(element))
-            continue;
-        bunkers.add(element)
-    }
-    return bunkers
-}
-const getBunkerDatasbyBunker=(bunkerDatas)=>{
-    const bunkers=getBunkers(bunkerDatas)
-    const bunkerDataByBunker = {};
 
-  // Initialize bunkerDataByBunker with empty arrays for each bunker
-  for (const bunker of bunkers) {
-    bunkerDataByBunker[bunker] = [];
-  }
-
-  for (const bunkerData of bunkerDatas) {
-    const bunkerKey = JSON.stringify(bunkerData.bunker);
-    for(const allBunkerData of bunkerDataByBunker[bunkerKey]){
-        if (bunkerData["measurementTime"] === allBunkerData["measurementTime"])
-        continue
-    }
-    const newFormData={
-        bunkerName:bunkerData['bunker']['name'],
-        amount:bunkerData['amount'],
-        measurementTime:bunkerData["measurementTime"]
-    }
-    bunkerDataByBunker[bunkerKey].push(newFormData);
-  }
-
-  return bunkerDataByBunker;
-}
-const getExtractionScales=(extractionScaleDatas)=>{
-    const extractionScales = new Set()
-    for (let index = 0; index < extractionScaleDatas.length; index++) {
-        const element = JSON.stringify(extractionScaleDatas[index].extractionScale);
-        if(extractionScales.has(element))
-            continue;
-        extractionScales.add(element)
-    }
-    return extractionScales
-}
-const getExtractionScaleDatasbyExtractionScale=(extractionScaleDatas)=>{
-    const extractionScales=getExtractionScales(extractionScaleDatas)
-    const esDataByEs = {};
-
-  // Initialize bunkerDataByBunker with empty arrays for each bunker
-  for (const es of extractionScales) {
-    esDataByEs[es] = [];
-  }
-
-  for (const extractionScaleData of extractionScaleDatas) {
-    const esKey = JSON.stringify(extractionScaleData['extractionScale']);
-    for(const allEsData of esDataByEs[esKey]){
-        if (extractionScaleData["measurementTime"] === allEsData["measurementTime"])
-        continue
-    }
-    const newFormData={
-        extractionScaleName:extractionScaleData['extractionScale']['name'],
-        amount:extractionScaleData['amount'],
-        measurementTime:extractionScaleData["measurementTime"],
-        deviation:extractionScaleData["deviationFromTarget"]
-    }
-    esDataByEs[esKey].push(newFormData);
-  }
-
-  return esDataByEs;
-}
 
