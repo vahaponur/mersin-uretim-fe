@@ -89,3 +89,35 @@ export const getExtractionScaleDatasbyExtractionScale=(extractionScaleDatas)=>{
 
   return esDataByEs;
 }
+export function tarihSaatTurkceyeCevir(tarihSaat) {
+  const tarih = tarihSaat;
+
+  // Ay isimleri dizisi
+  const aylar = [
+    'Ocak',
+    'Şubat',
+    'Mart',
+    'Nisan',
+    'Mayıs',
+    'Haziran',
+    'Temmuz',
+    'Ağustos',
+    'Eylül',
+    'Ekim',
+    'Kasım',
+    'Aralık'
+  ];
+
+  // Gün ve ay değerlerini alalım
+  const gun = tarih.getDate();
+  const ay = tarih.getMonth();
+
+  // Saat ve dakika değerlerini alalım
+  const saat = tarih.getHours();
+  const dakika = tarih.getMinutes();
+
+  // Türkçe tarih ve saat formatına çevirelim
+  const turkceTarihSaat = gun + ' ' + aylar[ay] + ' Saat: ' + saat + '.' + (dakika < 10 ? '0' : '') + dakika;
+  
+  return turkceTarihSaat;
+}

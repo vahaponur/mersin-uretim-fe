@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./styles.css";
 import * as dataHelper from "./dataHelper"
-import { BunkerLineGraph } from "./Chart";
+import { BunkerLineGraph, ExtractionScaleLineGraph } from "./Chart";
 const formatDate = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -12,14 +12,19 @@ const formatDate = (date) => {
 };
 
 const CustomReport = () => {
-  const [startDate, setStartDate] = useState(formatDate(new Date()));
-  const [endDate, setEndDate] = useState(formatDate(new Date()));
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [bunkerData, setBunkerData] = useState(null);
   const [extractionScaleData,setExtractionScaleData]=useState(null)
   const [loading, setLoading] = useState(false);
+ 
+
 
   const handleFetchData = async () => {
-
+    if(startDate ===null || endDate ===null){
+      alert("Tarihler boş olamaz")
+      return
+    }
     const sd=new Date(startDate)
     const ed=new Date(endDate)
     if (sd >= ed) {
@@ -30,8 +35,8 @@ const CustomReport = () => {
     const differenceInDays = differenceInMs / (1000 * 3600 * 24);
 
             // Check if the difference is greater than 5 days
-            if (differenceInDays > 5) {
-                alert('En fazla 5 gunluk rapor alinabilir');
+            if (differenceInDays > 10) {
+                alert('En fazla 10 gunluk rapor alinabilir');
                 return
             } 
 
@@ -69,6 +74,7 @@ const CustomReport = () => {
           id="start-date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
+         
         />
       </div>
       <div className="row justify-content-md-center">
@@ -95,8 +101,31 @@ const CustomReport = () => {
 
             {(()=>{
   const bunkers = Object.keys(bunkerData);
+  const extractionScales=Object.keys(extractionScaleData)
+  let j=0
   let graphs = [];
   let graphsToRender=[];
+  for (const es of extractionScales) {
+    j++
+    const esData=extractionScaleData[es] 
+    graphs.push(<ExtractionScaleLineGraph key={es} uniqueESData={esData}/>)
+    if(j%2==0){
+      graphsToRender.push(
+      <div className="row">
+        <div className="col">{graphs[0]}</div>
+        <div className="col">{graphs[1]}</div>
+      </div>)
+      graphs=[]
+    }
+    else if(j === extractionScales.length){
+      graphsToRender.push(
+        <div className="row">
+          <div className="col-6">{graphs[0]}</div>
+
+        </div>)
+    }
+  }
+
   let i = 0
   for (const bunker of bunkers) {
     i++
@@ -110,7 +139,7 @@ const CustomReport = () => {
       </div>)
       graphs=[]
     }
-    if(i === bunkers.length){
+    else if(i === bunkers.length){
       graphsToRender.push(
         <div className="row">
           <div className="col-6">{graphs[0]}</div>
@@ -122,8 +151,9 @@ const CustomReport = () => {
   return graphsToRender;
 })()}
             
-            <pre>{JSON.stringify(bunkerData, null, 2)}</pre>
-            <pre>{JSON.stringify(extractionScaleData, null, 2)}</pre>
+            <nav className="navbar fixed-bottom navbar-light justify-content-center bg-warning text-center text-success">
+  <div className="navbar-brand text-center text-success" href="#">Rapor Tarihi: {dataHelper.tarihSaatTurkceyeCevir(new Date(startDate))} - {dataHelper.tarihSaatTurkceyeCevir(new Date(endDate))}</div>
+  </nav>
           </div>
         ) : null}
       </div>
