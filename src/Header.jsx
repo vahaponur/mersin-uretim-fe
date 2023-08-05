@@ -17,10 +17,10 @@ const Header = () => {
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/daily">Günlük Rapor</a>
+                <a class="nav-link" aria-current="page" href="/custom">Tarihli Rapor</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="/Custom">Tarihli Rapor</a>
+                <a class="nav-link" href="/daily">Günlük Rapor</a>
               </li>
              
             </ul>

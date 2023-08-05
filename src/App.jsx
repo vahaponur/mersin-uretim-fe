@@ -26,7 +26,7 @@ const App = () => {
       <Header />
       {isLoggedIn ? (
         <><Switch>
-          <Route exact path="/" component={DailyReport} />
+          <Route exact path="/" component={CustomReport} />
           <Route exact path="/daily" component={DailyReport} />
           <Route exact path="/custom" component={CustomReport} />
         </Switch></>

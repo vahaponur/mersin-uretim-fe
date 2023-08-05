@@ -151,7 +151,7 @@ const CustomReport = () => {
   return graphsToRender;
 })()}
             
-            <nav className="navbar fixed-bottom navbar-light justify-content-center bg-warning text-center text-success">
+            <nav className="navbar sticky-bottom navbar-light mt-5 justify-content-center bg-warning text-center text-success">
   <div className="navbar-brand text-center text-success" href="#">Rapor Tarihi: {dataHelper.tarihSaatTurkceyeCevir(new Date(startDate))} - {dataHelper.tarihSaatTurkceyeCevir(new Date(endDate))}</div>
   </nav>
           </div>
