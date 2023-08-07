@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import "./styles.css";
 import * as dataHelper from "./dataHelper"
 import { BunkerLineGraph, ExtractionScaleLineGraph } from "./Chart";
@@ -12,89 +12,62 @@ const formatDate = (date) => {
 };
 
 const DailyReport = () => {
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [bunkerData, setBunkerData] = useState(null);
-  const [extractionScaleData,setExtractionScaleData]=useState(null)
+
+  const [bunkerData, setBunkerData] = useState([]);
+  const [extractionScaleData,setExtractionScaleData]=useState([])
   const [loading, setLoading] = useState(false);
  
 
 
-  const handleFetchData = async () => {
-    if(startDate ===null || endDate ===null){
-      alert("Tarihler boş olamaz")
-      return
-    }
-    const sd=new Date(startDate)
-    const ed=new Date(endDate)
-    if (sd >= ed) {
-      alert("Baslangic tarihi bitisten erken veya ayni olamaz");
-      return;
-    }
-    const differenceInMs = ed - sd;
-    const differenceInDays = differenceInMs / (1000 * 3600 * 24);
+  useEffect(() => {
+    // Function to fetch data for the daily report
+    const fetchDailyReportData = async () => {
+      const std = new Date();
+      std.setHours(0);
+      std.setMinutes(0);
+      std.setSeconds(0);
+      std.setMilliseconds(0);
+      const end = new Date();
 
-            // Check if the difference is greater than 5 days
-            if (differenceInDays > 10) {
-                alert('En fazla 10 gunluk rapor alinabilir');
-                return
-            } 
+      try {
+        const response1 = await fetch(
+          `http://134.122.69.189:5000/api/bunkerdata/getallbetweendates?startDate=${
+            formatDate(std)
+          }&endDate=${formatDate(end)}`
+        );
+        const response2 = await fetch(
+          `http://134.122.69.189:5000/api/extractionscaledata/getallbetweendates?startDate=${
+            formatDate(std)
+          }&endDate=${formatDate(end)}`
+        );
 
+        const bdata = await response1.json();
+        const edata = await response2.json();
 
-    setLoading(true); // Set loading to true before fetching data
+        setBunkerData(dataHelper.getBunkerDatasbyBunker(bdata));
+        setExtractionScaleData(
+          dataHelper.getExtractionScaleDatasbyExtractionScale(edata)
+        );
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
 
-    // Perform the API fetch with the selected dates
-    try {
-      const response1 = await fetch(
-        `http://134.122.69.189:5000/api/bunkerdata/getallbetweendates?startDate=${startDate}&endDate=${endDate}`
-      );
-      const response2 = await fetch(
-        `http://134.122.69.189:5000/api/extractionscaledata/getallbetweendates?startDate=${startDate}&endDate=${endDate}`
-      );
-      const bdata = await response1.json();
-      const edata=await response2.json()
+      setLoading(false); // Set loading back to false after fetching data
+    };
 
-      setBunkerData(dataHelper.getBunkerDatasbyBunker(bdata));
-      setExtractionScaleData(dataHelper.getExtractionScaleDatasbyExtractionScale(edata))
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
+    fetchDailyReportData(); // Fetch data when the component mounts
 
-    setLoading(false); // Set loading back to false after fetching data
-  };
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <>
-    <div className="container text-center mt-5">
-    <div className="row justify-content-md-center mb-2 ">
-        <label className="col col-lg-2" htmlFor="start-date">Başlangıç Tarihi: </label>
-        <input
-        className="col col-lg-2"
-          type="datetime-local"
-          id="start-date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-         
-        />
-      </div>
-      <div className="row justify-content-md-center">
-        <label className="col col-lg-2" htmlFor="end-date">Bitiş Tarihi:</label>
-        <input
-        className="col col-lg-2"
-          type="datetime-local"
-          id="end-date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-        />
-      </div>
-      <button className="mt-2 btn btn-warning "  type="button" onClick={handleFetchData} disabled={loading}>Raporla</button>
-    </div>
+
 
 
       <div>
         {loading ? (
           <div>Loading...</div>
-        ) : bunkerData && extractionScaleData ? (
+        ) : bunkerData.length>0 || extractionScaleData.length>0 ? (
           <div className="container">
             {/* Display your data here */}
             {/* For example: */}
@@ -151,11 +124,9 @@ const DailyReport = () => {
   return graphsToRender;
 })()}
             
-            <nav className="navbar fixed-bottom navbar-light justify-content-center bg-warning text-center text-success">
-  <div className="navbar-brand text-center text-success" href="#">Rapor Tarihi: {dataHelper.tarihSaatTurkceyeCevir(new Date(startDate))} - {dataHelper.tarihSaatTurkceyeCevir(new Date(endDate))}</div>
-  </nav>
+
           </div>
-        ) : null}
+        ) : <div className="text-center mt-5">KULLANILABILACAK VERI YOK</div>}
       </div>
     </>
   );
