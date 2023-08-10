@@ -15,13 +15,15 @@ const DailyReport = () => {
 
   const [bunkerData, setBunkerData] = useState([]);
   const [extractionScaleData,setExtractionScaleData]=useState([])
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading state as true
+  const [dataFetched, setDataFetched] = useState(false);
  
 
 
   useEffect(() => {
     // Function to fetch data for the daily report
     const fetchDailyReportData = async () => {
+      setLoading(true)
       const std = new Date();
       std.setHours(0);
       std.setMinutes(0);
@@ -35,6 +37,7 @@ const DailyReport = () => {
             formatDate(std)
           }&endDate=${formatDate(end)}`
         );
+        console.log(response1)
         const response2 = await fetch(
           `http://134.122.69.189:5000/api/extractionscaledata/getallbetweendates?startDate=${
             formatDate(std)
@@ -48,6 +51,7 @@ const DailyReport = () => {
         setExtractionScaleData(
           dataHelper.getExtractionScaleDatasbyExtractionScale(edata)
         );
+        setDataFetched(true); 
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -67,7 +71,7 @@ const DailyReport = () => {
       <div>
         {loading ? (
           <div>Loading...</div>
-        ) : bunkerData.length>0 || extractionScaleData.length>0 ? (
+        ) : dataFetched ? (
           <div className="container">
             {/* Display your data here */}
             {/* For example: */}
